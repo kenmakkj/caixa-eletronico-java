@@ -1,74 +1,51 @@
-# 🏧 Caixa Eletrônico — ATM Simulator
+# 🏦 Simulação de Terminal Bancário (ATM) em Java
 
-Programa desenvolvido em Java para simular o funcionamento de um caixa eletrônico, controlando o estoque de notas e realizando saques de forma otimizada.
-
----
-
-## 📋 Descrição do projeto
-
-O sistema simula um caixa eletrônico com 6 tipos de notas disponíveis: **R$ 2, R$ 5, R$ 10, R$ 20, R$ 50 e R$ 100**. O programa realiza o abastecimento inicial do caixa, entra em operação contínua atendendo clientes e gerencia o estoque de notas a cada saque realizado.
+Solução desenvolvida para gerenciar a lógica de um terminal de autoatendimento, focada no controle de inventário de cédulas e algoritmos de otimização de saques.
 
 ---
 
-## ⚙️ Funcionalidades
+## 📖 Sobre o Sistema
 
-- Abastecimento inicial do caixa com quantidade definida de cada tipo de nota
-- Atendimento contínuo de clientes em sequência
-- Cálculo automático das notas a serem entregues, priorizando sempre as de **maior valor**
-- Decremento do estoque a cada saque realizado
-- Validação de saque antes de efetivá-lo
-- Emissão de mensagens de erro e alerta ao operador
+Este projeto simula as operações internas de um caixa eletrônico real. O software gerencia um estoque composto por seis denominações de notas (**R$ 100, R$ 50, R$ 20, R$ 10, R$ 5 e R$ 2**), realizando o controle preciso de saldo e garantindo que as regras de negócio bancárias sejam respeitadas a cada transação.
 
 ---
 
-## 🧠 Lógica de Saque
+## 🚀 Capacidades do Software
 
-O programa sempre tenta pagar com as **maiores notas possíveis**, seguindo a ordem de prioridade:
-
-```
-R$ 100 → R$ 50 → R$ 20 → R$ 10 → R$ 5 → R$ 2
-```
-
-Antes de confirmar o saque, o sistema verifica se é possível atender ao valor solicitado com as notas disponíveis. Caso não seja possível, exibe a mensagem:
-
-```
-Não Temos Notas Para Este Saque
-```
-
-Caso o caixa fique abaixo do estoque mínimo, o atendimento é encerrado e o sistema exibe:
-
-```
-Caixa Vazio: Chame o Operador
-```
+* **Gestão de Inventário:** Controle matricial das quantidades de cada cédula.
+* **Estratégia de Saque Otimizada:** Implementação de algoritmo para entrega do menor número possível de notas.
+* **Segurança de Estoque:** Monitoramento de saldo total e bloqueio automático em caso de nível crítico (Cota Mínima).
+* **Validação em Tempo Real:** Verificação de viabilidade de saque antes da dedução dos valores.
+* **Logs de Operação:** Sistema preparado para gerar extratos detalhados das movimentações da sessão.
 
 ---
 
-## 🖥️ Interface
+## 🧩 Inteligência do Algoritmo
 
-A interface com o usuário é fornecida externamente e integrada ao programa por meio de um contrato de utilização (Programa 2), conforme especificação do projeto.
+O motor de saque utiliza uma **estratégia gulosa** para selecionar as cédulas. O fluxo de decisão segue a hierarquia de valor decrescente:
+
+1.  Calcula a necessidade de notas de **R$ 100**;
+2.  Passa para as denominações menores (**R$ 50, 20, 10, 5**) sucessivamente;
+3.  Finaliza com notas de **R$ 2**.
+
+### Mensagens de Controle:
+* **Indisponibilidade:** Caso a combinação de notas no estoque não atenda ao valor exato solicitado:  
+    `"Saque não realizado por falta de cédulas"`
+* **Nível Crítico:** Se o valor global do caixa for inferior ao limite operacional:  
+    `"Caixa Vazio: Chame o Operador"`
 
 ---
 
-## 📁 Estrutura do Projeto
-````
-caixa-eletronico-java/
+## 🏗️ Organização Técnica
+
+O projeto foi construído sobre uma arquitetura de **Interface (Contrato)**, o que permite que a lógica de negócio (Back-end) se comunique de forma transparente com qualquer interface de usuário (Front-end/GUI).
+
+### Estrutura de Diretórios:
+```text
+caixa-eletronico-aura67/
 ├── src/
-│   └── caixaeletronico/
-│       ├── CaixaEletronico.java    # Classe principal com a lógica do caixa
-│       └── ICaixaEletronico.java   # Interface (contrato) fornecida pelo professor
+│   └── caixa_eletronico_aura67/
+│       ├── CaixaEletronico.java    # Motor de regras e lógica de negócio
+│       └── ICaixaEletronico.java   # Contrato de métodos obrigatórios
 ├── .gitignore
 └── README.md
-````
-
----
-
-## 🛠️ Tecnologias
-
-- Java (JDK 8+)
-
----
-
-## 📌 Observações
-
-- O programa foi desenvolvido como exercício acadêmico de estruturas de repetição e controle de fluxo em Java.
-- A interface gráfica/textual foi fornecida pelo professor e integrada conforme o contrato de uso especificado.

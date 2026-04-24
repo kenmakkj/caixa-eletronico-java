@@ -1,0 +1,39 @@
+1. Regras de Negócio e Lógica (Funcionalidade)
+    Matriz Obrigatória: O sistema deve trabalhar obrigatoriamente com uma matriz $6\times2$ para armazenar o valor e a quantidade de cédulas.
+                               
+    Cédulas Iniciais: A matriz deve ser inicializada com os seguintes valores e quantidades:
+        R$ 100: 100 notas.
+        R$ 50: 200 notas.
+        R$ 20: 300 notas.
+        R$ 10: 350 notas.
+        R$ 5: 450 notas.
+        R$ 2: 500 notas.
+                               
+    Algoritmo Guloso: O programa deve sempre priorizar as notas de maior valor para emitir o menor número de cédulas possível.
+                               
+    Limite de Cédulas: Não é permitido realizar saques que resultem em mais de 30 cédulas emitidas.
+                               
+    Validação de Notas: Se não houver notas suficientes para o valor exato, deve exibir: "Saque não realizado por falta de cédulas".
+                               
+    Cota Mínima: Se o saldo total do caixa ficar abaixo do valor definido como "Cota Mínima", o sistema deve parar de atender e exibir: "Caixa Vazio: Chame o Operador".
+                               
+    Extrato de Saída: Ao clicar no botão "Sair", o sistema deve obrigatoriamente apresentar um extrato contendo todos os saques realizados e a atualização do saldo final.
+                               
+2. Regras Técnicas e de Implementação
+    Contrato (Interface): É obrigatório implementar a interface ICaixaEletronico fornecida, sem alterar os nomes ou assinaturas dos métodos.
+                               
+    Interface Gráfica (GUI): O código deve estar integrado com a interface gráfica fornecida pelo professor no método main.
+                               
+    Persistência de Dados: Sempre que um saque for efetuado, a quantidade de dinheiro na matriz deve ser decrementada.
+                               
+3. Critérios de Avaliação 
+                               
+    GitHub: O código-fonte deve estar publicado em um repositório organizado no GitHub.
+                            
+    Composição da Nota:
+        50%: Pergunta individual (avaliação oral).
+        20%: Funcionalidade (sistema operando conforme requisitos).
+        20%: Documentação (comentários no código, organização e clareza).
+        10%: Perguntas respondidas corretamente pelo grupo.
+
+//Lembrete: O professor escolherá 2 alunos no momento da apresentação; todos devem dominar o projeto por completo.

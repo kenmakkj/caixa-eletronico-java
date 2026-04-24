@@ -47,5 +47,4 @@ caixa-eletronico-aura67/
 │   └── caixa_eletronico_aura67/
 │       ├── CaixaEletronico.java    # Motor de regras e lógica de negócio
 │       └── ICaixaEletronico.java   # Contrato de métodos obrigatórios
-├── .gitignore
 └── README.md

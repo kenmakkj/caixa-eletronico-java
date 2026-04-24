@@ -1,6 +1,6 @@
-# 🏦 Simulação de Terminal Bancário (ATM) em Java
+# 🏦 Caixa Eletronico - ATM Simulator in Java
 
-Solução desenvolvida para gerenciar a lógica de um terminal de autoatendimento, focada no controle de inventário de cédulas e algoritmos de otimização de saques.
+Software em Java projetado para gerenciar a lógica de um terminal bancário, automatizando o controle de inventário de cédulas e a otimização de saques via algoritmo.
 
 ---
 
@@ -20,7 +20,7 @@ Este projeto simula as operações internas de um caixa eletrônico real. O soft
 
 ---
 
-## 🧩 Inteligência do Algoritmo
+## 🧠 Inteligência do Algoritmo
 
 O motor de saque utiliza uma **estratégia gulosa** para selecionar as cédulas. O fluxo de decisão segue a hierarquia de valor decrescente:
 
@@ -36,7 +36,7 @@ O motor de saque utiliza uma **estratégia gulosa** para selecionar as cédulas.
 
 ---
 
-## 🏗️ Organização Técnica
+## 📋 Organização Técnica
 
 O projeto foi construído sobre uma arquitetura de **Interface (Contrato)**, o que permite que a lógica de negócio (Back-end) se comunique de forma transparente com qualquer interface de usuário (Front-end/GUI).
 

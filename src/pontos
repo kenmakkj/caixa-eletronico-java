@@ -1,0 +1,207 @@
+#alguns pontos que foram citados, usei outro banco de ref pra incrementar nele
+
+ICaixaEletronico
+package caixaeletronico;
+
+public interface ICaixaEletronico {
+    String pegaValorTotalDisponivel();
+    String sacar(Integer valor);
+    String pegaRelatorioCedulas();
+    String reposicaoCedulas(Integer cedula, Integer quantidade);
+    String armazenaCotaMinima(Integer minimo);
+}
+
+CaixaEletronico.java
+package caixaeletronico;
+
+import java.util.ArrayList;
+
+public class CaixaEletronico implements ICaixaEletronico {
+    // Matriz de controle de estoque
+    private int[][] cedulas = {
+        {100, 100}, {50, 200}, {20, 300}, {10, 350}, {5, 450}, {2, 500}
+    };
+
+    // DIFERENÇA 1: ArrayList dinâmico em vez de vetor fixo
+    private ArrayList<String> historico = new ArrayList<>();
+    private int cotaMinima = 0;
+
+    @Override
+    public String pegaValorTotalDisponivel() {
+        int total = calcularSomaTotal();
+        return "Total em caixa: R$ " + total;
+    }
+
+    private int calcularSomaTotal() {
+        int total = 0;
+        for (int[] c : cedulas) total += c[0] * c[1];
+        return total;
+    }
+
+    @Override
+    public String sacar(Integer valor) {
+        if (valor == null || valor <= 0) return "Valor inválido.";
+        if (calcularSomaTotal() <= cotaMinima) return "Caixa Vazio: Chame o Operador";
+
+        int[] notasUsadas = new int[cedulas.length];
+        int restante = valor;
+
+        // Algoritmo Guloso: maior para a menor
+        for (int i = 0; i < cedulas.length; i++) {
+            int qtdNecessaria = restante / cedulas[i][0];
+            int qtdParaUsar = Math.min(qtdNecessaria, cedulas[i][1]);
+            
+            notasUsadas[i] = qtdParaUsar;
+            restante -= cedulas[i][0] * qtdParaUsar;
+        }
+
+        if (restante != 0) return "Saque não realizado: notas indisponíveis.";
+
+        // Validação de limite físico de notas
+        int totalNotas = 0;
+        for (int n : notasUsadas) totalNotas += n;
+        if (totalNotas > 30) return "Limite de 30 cédulas excedido.";
+
+        // Efetivação do saque
+        StringBuilder sb = new StringBuilder("Saque de R$ " + valor + " realizado!\n");
+        for (int i = 0; i < cedulas.length; i++) {
+            if (notasUsadas[i] > 0) {
+                cedulas[i][1] -= notasUsadas[i];
+                sb.append(notasUsadas[i]).append("x R$ ").append(cedulas[i][0]).append("\n");
+            }
+        }
+        
+        historico.add("SAQUE: R$ " + valor + " | Notas: " + totalNotas);
+        return sb.toString();
+    }
+
+    @Override
+    public String pegaRelatorioCedulas() {
+        StringBuilder sb = new StringBuilder("=== ESTOQUE ===\n");
+        for (int[] c : cedulas) {
+            sb.append("R$ ").append(c[0]).append(": ").append(c[1]).append(" un.\n");
+        }
+        return sb.toString();
+    }
+
+    @Override
+    public String reposicaoCedulas(Integer cedula, Integer quantidade) {
+        for (int i = 0; i < cedulas.length; i++) {
+            if (cedulas[i][0] == cedula) {
+                cedulas[i][1] += quantidade;
+                historico.add("REPOSIÇÃO: " + quantidade + "x R$ " + cedula);
+                return "Reposição concluída.";
+            }
+        }
+        return "Cédula inexistente.";
+    }
+
+    @Override
+    public String armazenaCotaMinima(Integer minimo) {
+        this.cotaMinima = minimo;
+        return "Cota mínima: R$ " + minimo;
+    }
+
+    public String geraExtrato() {
+        if (historico.isEmpty()) return "Sem transações.";
+        return "=== HISTÓRICO ===\n" + String.join("\n", historico);
+    }
+}
+
+a interface agora propria
+
+package caixaeletronico;
+
+import java.util.ArrayList;
+
+public class CaixaEletronico implements ICaixaEletronico {
+    // Matriz de controle de estoque
+    private int[][] cedulas = {
+        {100, 100}, {50, 200}, {20, 300}, {10, 350}, {5, 450}, {2, 500}
+    };
+
+    // DIFERENÇA 1: ArrayList dinâmico em vez de vetor fixo
+    private ArrayList<String> historico = new ArrayList<>();
+    private int cotaMinima = 0;
+
+    @Override
+    public String pegaValorTotalDisponivel() {
+        int total = calcularSomaTotal();
+        return "Total em caixa: R$ " + total;
+    }
+
+    private int calcularSomaTotal() {
+        int total = 0;
+        for (int[] c : cedulas) total += c[0] * c[1];
+        return total;
+    }
+
+    @Override
+    public String sacar(Integer valor) {
+        if (valor == null || valor <= 0) return "Valor inválido.";
+        if (calcularSomaTotal() <= cotaMinima) return "Caixa Vazio: Chame o Operador";
+
+        int[] notasUsadas = new int[cedulas.length];
+        int restante = valor;
+
+        // Algoritmo Guloso: maior para a menor
+        for (int i = 0; i < cedulas.length; i++) {
+            int qtdNecessaria = restante / cedulas[i][0];
+            int qtdParaUsar = Math.min(qtdNecessaria, cedulas[i][1]);
+            
+            notasUsadas[i] = qtdParaUsar;
+            restante -= cedulas[i][0] * qtdParaUsar;
+        }
+
+        if (restante != 0) return "Saque não realizado: notas indisponíveis.";
+
+        // Validação de limite físico de notas
+        int totalNotas = 0;
+        for (int n : notasUsadas) totalNotas += n;
+        if (totalNotas > 30) return "Limite de 30 cédulas excedido.";
+
+        // Efetivação do saque
+        StringBuilder sb = new StringBuilder("Saque de R$ " + valor + " realizado!\n");
+        for (int i = 0; i < cedulas.length; i++) {
+            if (notasUsadas[i] > 0) {
+                cedulas[i][1] -= notasUsadas[i];
+                sb.append(notasUsadas[i]).append("x R$ ").append(cedulas[i][0]).append("\n");
+            }
+        }
+        
+        historico.add("SAQUE: R$ " + valor + " | Notas: " + totalNotas);
+        return sb.toString();
+    }
+
+    @Override
+    public String pegaRelatorioCedulas() {
+        StringBuilder sb = new StringBuilder("=== ESTOQUE ===\n");
+        for (int[] c : cedulas) {
+            sb.append("R$ ").append(c[0]).append(": ").append(c[1]).append(" un.\n");
+        }
+        return sb.toString();
+    }
+
+    @Override
+    public String reposicaoCedulas(Integer cedula, Integer quantidade) {
+        for (int i = 0; i < cedulas.length; i++) {
+            if (cedulas[i][0] == cedula) {
+                cedulas[i][1] += quantidade;
+                historico.add("REPOSIÇÃO: " + quantidade + "x R$ " + cedula);
+                return "Reposição concluída.";
+            }
+        }
+        return "Cédula inexistente.";
+    }
+
+    @Override
+    public String armazenaCotaMinima(Integer minimo) {
+        this.cotaMinima = minimo;
+        return "Cota mínima: R$ " + minimo;
+    }
+
+    public String geraExtrato() {
+        if (historico.isEmpty()) return "Sem transações.";
+        return "=== HISTÓRICO ===\n" + String.join("\n", historico);
+    }
+}

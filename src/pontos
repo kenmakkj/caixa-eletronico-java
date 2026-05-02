@@ -1,6 +1,8 @@
 #alguns pontos que foram citados, usei outro banco de ref pra incrementar nele
 
 ICaixaEletronico
+
+-------------------------------------------------------------------------------------------------------------------------------
 package caixaeletronico;
 
 public interface ICaixaEletronico {
@@ -12,6 +14,8 @@ public interface ICaixaEletronico {
 }
 
 CaixaEletronico.java
+
+----------------------------------------------------------------------------------------------------------------------------
 package caixaeletronico;
 
 import java.util.ArrayList;
@@ -107,6 +111,8 @@ public class CaixaEletronico implements ICaixaEletronico {
         return "=== HISTÓRICO ===\n" + String.join("\n", historico);
     }
 }
+
+----------------------------------------------------------------------------------------------------------------------------
 
 a interface agora propria
 

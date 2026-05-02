@@ -23,7 +23,12 @@ import java.util.ArrayList;
 public class CaixaEletronico implements ICaixaEletronico {
     // Matriz de controle de estoque
     private int[][] cedulas = {
-        {100, 100}, {50, 200}, {20, 300}, {10, 350}, {5, 450}, {2, 500}
+    {100, 100}, 
+    {50, 200}, 
+    {20, 300},
+    {10, 350}, 
+    {5, 450}, 
+    {2, 500}
     };
 
     // DIFERENÇA 1: ArrayList dinâmico em vez de vetor fixo

@@ -216,3 +216,17 @@ public class CaixaEletronico implements ICaixaEletronico {
         return "=== HISTÓRICO ===\n" + String.join("\n", historico);
     }
 }
+
+
+
+Principais Diferenças e Por que é Melhor:
+Flexibilidade de Dados (ArrayList): No primeiro código, o histórico tinha limite. Aqui, o ArrayList permite que o banco 
+registre infinitas operações até que a memória acabe ou o programa feche.
+
+
+Acoplamento Fraco (Reflexão): A GUI agora é independente. Se você criar uma classe CaixaPremium.java com regras diferentes, 
+a mesma GUI funciona nela apenas trocando o parâmetro do construtor. Isso é o "O" do SOLID (Open/Closed Principle).
+
+
+Segurança e Validação: Note o uso de StringBuilder para montar strings grandes. É muito mais performático em Java do que ficar somando 
+strings (texto += "...") dentro de loops, pois evita a criação de múltiplos objetos na memória.

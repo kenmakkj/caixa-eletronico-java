@@ -9,17 +9,9 @@ import java.util.List;
 
 public class GUI {
 
-    public GUI(Class<?> classe) {
-        // construtor que aceita a classe como parametro
-    }
-
-    public void show() {
-        main(new String[]{});
-    }
-    
-    
-    // Matriz das cédulas 6x2
-    
+    // ------------------------------------------------------------------
+    // Matriz de cedulas: coluna 0 = valor | coluna 1 = quantidade
+    // ------------------------------------------------------------------
     static int[][] cedulas = {
             {100, 100},
             { 50, 200},
@@ -32,34 +24,40 @@ public class GUI {
     static int cotaMinima = 0;
     static List<String> extrato = new ArrayList<>();
     static final int MAX_CEDULAS = 30;
-    
-    // Calcula o total disponivel no caixa
+
+    // ------------------------------------------------------------------
+    // Construtor - recebe a classe CaixaEletronico.class
+    // ------------------------------------------------------------------
+    public GUI(Class<?> classe) {
+        // construtor necessario para o CaixaEletronico chamar: new GUI(CaixaEletronico.class)
+    }
+
+    // ------------------------------------------------------------------
+    // Metodos de logica do caixa
+    // ------------------------------------------------------------------
+
     static int calcularTotal() {
         int total = 0;
         for (int[] c : cedulas) total += c[0] * c[1];
         return total;
     }
 
-    // Verifica se o caixa ainda pode atender
     static boolean caixaAtivo() {
         return calcularTotal() > cotaMinima;
     }
 
-    // Formata valor em reais
     static String formatarReal(int valor) {
         return String.format("R$ %,.2f", (double) valor);
     }
 
-    // Logica do saque
     static String sacar(int valor) {
         if (!caixaAtivo()) return "Caixa Vazio: Chame o Operador";
         if (valor <= 0)    return "Valor invalido. Digite um valor positivo.";
 
         int[] notasUsadas = new int[cedulas.length];
-        int restante      = valor;
-        int totalCedulas  = 0;
+        int restante     = valor;
+        int totalCedulas = 0;
 
-        // Greedy: maior nota primeiro
         for (int i = 0; i < cedulas.length; i++) {
             if (restante <= 0) break;
             int qtdUsar    = Math.min(restante / cedulas[i][0], cedulas[i][1]);
@@ -71,7 +69,6 @@ public class GUI {
         if (restante != 0)              return "Nao Temos Notas Para Este Saque.";
         if (totalCedulas > MAX_CEDULAS) return "Saque nao realizado: limite de 30 cedulas excedido.";
 
-        // Confirma o saque
         StringBuilder sb = new StringBuilder();
         sb.append("=== SAQUE REALIZADO ===\n\n");
         sb.append("Valor sacado: ").append(formatarReal(valor)).append("\n\n");
@@ -96,7 +93,6 @@ public class GUI {
         return sb.toString();
     }
 
-    // Logica do relatorio de cedulas
     static String relatorioCedulas() {
         StringBuilder sb = new StringBuilder();
         sb.append("============================\n");
@@ -113,13 +109,11 @@ public class GUI {
         return sb.toString();
     }
 
-    // Logica do valor total disponivel
     static String valorTotalDisponivel() {
         if (!caixaAtivo()) return "Caixa Vazio: Chame o Operador";
         return "Valor total disponivel no caixa:\n\n" + formatarReal(calcularTotal());
     }
 
-    // Logica da reposicao de cedulas
     static String reposicaoCedulas(int cedula, int quantidade) {
         if (quantidade <= 0) return "Quantidade invalida. Digite um valor maior que zero.";
         for (int[] c : cedulas) {
@@ -139,7 +133,6 @@ public class GUI {
         return "Cedula de R$ " + cedula + " nao existe.\nUse: 2, 5, 10, 20, 50 ou 100.";
     }
 
-    // Logica da cota minima
     static String definirCotaMinima(int minimo) {
         if (minimo < 0) return "Valor invalido. Digite um valor positivo.";
         cotaMinima = minimo;
@@ -149,7 +142,6 @@ public class GUI {
         return msg;
     }
 
-    // Logica do extrato final
     static String gerarExtrato() {
         StringBuilder sb = new StringBuilder();
         sb.append("===================================\n");
@@ -167,8 +159,9 @@ public class GUI {
         sb.append("\n===================================");
         return sb.toString();
     }
-    
-    public static void main(String[] args) {
+
+
+    public void show() {
 
         JFrame frame = new JFrame("Caixa eletronico");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -177,7 +170,9 @@ public class GUI {
         frame.setLocationRelativeTo(null);
         frame.setLayout(new GridLayout(0, 1, 4, 4));
 
-       //modulo cliente
+        // -------------------------------------------------------
+        // MODULO DO CLIENTE
+        // -------------------------------------------------------
         frame.add(new JLabel("Modulo do Cliente:"));
 
         JButton btnSaque = new JButton("Efetuar Saque");
@@ -197,7 +192,9 @@ public class GUI {
         });
         frame.add(btnSaque);
 
-        //modulo do administrador
+        // -------------------------------------------------------
+        // MODULO DO ADMINISTRADOR
+        // -------------------------------------------------------
         frame.add(new JLabel("Modulo do Administrador:"));
 
         JButton btnRelatorio = new JButton("Relatorio de Cedulas");
@@ -251,7 +248,9 @@ public class GUI {
         });
         frame.add(btnCota);
 
-        //botao sair
+        // -------------------------------------------------------
+        // MODULO DE AMBOS
+        // -------------------------------------------------------
         frame.add(new JLabel("Modulo de Ambos:"));
 
         JButton btnSair = new JButton("Sair");

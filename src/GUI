@@ -3,169 +3,47 @@ package caixa_eletronico_aura67;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
+/**
+ * Interface grafica do Caixa Eletronico.
+ * Toda a logica de negocio e delegada ao objeto CaixaEletronico,
+ * que implementa ICaixaEletronico. A GUI nao possui logica propria
+ * de saque, reposicao ou calculo — apenas exibe resultados e
+ * repassa as acoes do usuario para o backend.
+ */
 public class GUI {
 
     // ------------------------------------------------------------------
-    // Matriz de cedulas: coluna 0 = valor | coluna 1 = quantidade
+    // Backend: instancia do CaixaEletronico que faz todo o trabalho
     // ------------------------------------------------------------------
-    static int[][] cedulas = {
-            {100, 100},
-            { 50, 200},
-            { 20, 300},
-            { 10, 350},
-            {  5, 450},
-            {  2, 500}
-    };
-
-    static int cotaMinima = 0;
-    static List<String> extrato = new ArrayList<>();
-    static final int MAX_CEDULAS = 30;
+    private final ICaixaEletronico caixa;
 
     // ------------------------------------------------------------------
-    // Construtor - recebe a classe CaixaEletronico.class
+    // Construtor — recebe a Class do CaixaEletronico, instancia via
+    // reflexao para manter a assinatura exigida pelo enunciado
     // ------------------------------------------------------------------
     public GUI(Class<?> classe) {
-        // construtor necessario para o CaixaEletronico chamar: new GUI(CaixaEletronico.class)
+        ICaixaEletronico instancia = null;
+        try {
+            instancia = (ICaixaEletronico) classe.getDeclaredConstructor().newInstance();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null,
+                    "Erro ao instanciar o backend: " + e.getMessage(),
+                    "Erro critico", JOptionPane.ERROR_MESSAGE);
+            System.exit(1);
+        }
+        this.caixa = instancia;
     }
 
     // ------------------------------------------------------------------
-    // Metodos de logica do caixa
+    // Monta e exibe a janela principal
     // ------------------------------------------------------------------
-
-    static int calcularTotal() {
-        int total = 0;
-        for (int[] c : cedulas) total += c[0] * c[1];
-        return total;
-    }
-
-    static boolean caixaAtivo() {
-        return calcularTotal() > cotaMinima;
-    }
-
-    static String formatarReal(int valor) {
-        return String.format("R$ %,.2f", (double) valor);
-    }
-
-    static String sacar(int valor) {
-        if (!caixaAtivo()) return "Caixa Vazio: Chame o Operador";
-        if (valor <= 0)    return "Valor invalido. Digite um valor positivo.";
-
-        int[] notasUsadas = new int[cedulas.length];
-        int restante     = valor;
-        int totalCedulas = 0;
-
-        for (int i = 0; i < cedulas.length; i++) {
-            if (restante <= 0) break;
-            int qtdUsar    = Math.min(restante / cedulas[i][0], cedulas[i][1]);
-            notasUsadas[i] = qtdUsar;
-            restante      -= qtdUsar * cedulas[i][0];
-            totalCedulas  += qtdUsar;
-        }
-
-        if (restante != 0)              return "Nao Temos Notas Para Este Saque.";
-        if (totalCedulas > MAX_CEDULAS) return "Saque nao realizado: limite de 30 cedulas excedido.";
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("=== SAQUE REALIZADO ===\n\n");
-        sb.append("Valor sacado: ").append(formatarReal(valor)).append("\n\n");
-        sb.append("Cedulas entregues:\n");
-
-        for (int i = 0; i < cedulas.length; i++) {
-            if (notasUsadas[i] > 0) {
-                cedulas[i][1] -= notasUsadas[i];
-                sb.append(String.format("  R$ %3d  x %2d  =  %s%n",
-                        cedulas[i][0], notasUsadas[i],
-                        formatarReal(notasUsadas[i] * cedulas[i][0])));
-            }
-        }
-
-        sb.append("\nTotal de cedulas: ").append(totalCedulas);
-        sb.append("\nSaldo restante:   ").append(formatarReal(calcularTotal()));
-
-        extrato.add("SAQUE: " + formatarReal(valor) + " | Saldo: " + formatarReal(calcularTotal()));
-
-        if (!caixaAtivo()) sb.append("\n\n*** Caixa Vazio: Chame o Operador ***");
-
-        return sb.toString();
-    }
-
-    static String relatorioCedulas() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("============================\n");
-        sb.append("    RELATORIO DE CEDULAS\n");
-        sb.append("============================\n\n");
-        sb.append(String.format("%-10s %-12s %s%n", "Cedula", "Quantidade", "Subtotal"));
-        sb.append("------------------------------------\n");
-        for (int[] c : cedulas) {
-            sb.append(String.format("R$ %-7d %-12d %s%n",
-                    c[0], c[1], formatarReal(c[0] * c[1])));
-        }
-        sb.append("------------------------------------\n");
-        sb.append("TOTAL: ").append(formatarReal(calcularTotal()));
-        return sb.toString();
-    }
-
-    static String valorTotalDisponivel() {
-        if (!caixaAtivo()) return "Caixa Vazio: Chame o Operador";
-        return "Valor total disponivel no caixa:\n\n" + formatarReal(calcularTotal());
-    }
-
-    static String reposicaoCedulas(int cedula, int quantidade) {
-        if (quantidade <= 0) return "Quantidade invalida. Digite um valor maior que zero.";
-        for (int[] c : cedulas) {
-            if (c[0] == cedula) {
-                int antes = c[1];
-                c[1] += quantidade;
-                extrato.add("REPOSICAO: " + quantidade + "x R$" + cedula
-                        + " | Saldo: " + formatarReal(calcularTotal()));
-                return "=== REPOSICAO REALIZADA ===\n\n"
-                        + "Cedula:             R$ " + cedula + "\n"
-                        + "Quantidade antes:   " + antes + "\n"
-                        + "Quantidade reposta: +" + quantidade + "\n"
-                        + "Quantidade atual:   " + c[1] + "\n\n"
-                        + "Saldo total: " + formatarReal(calcularTotal());
-            }
-        }
-        return "Cedula de R$ " + cedula + " nao existe.\nUse: 2, 5, 10, 20, 50 ou 100.";
-    }
-
-    static String definirCotaMinima(int minimo) {
-        if (minimo < 0) return "Valor invalido. Digite um valor positivo.";
-        cotaMinima = minimo;
-        String msg = "Cota minima definida: " + formatarReal(minimo)
-                + "\nSaldo atual: " + formatarReal(calcularTotal());
-        if (!caixaAtivo()) msg += "\n\n*** Caixa Vazio: Chame o Operador ***";
-        return msg;
-    }
-
-    static String gerarExtrato() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("===================================\n");
-        sb.append("         EXTRATO DA SESSAO\n");
-        sb.append("===================================\n\n");
-        if (extrato.isEmpty()) {
-            sb.append("Nenhuma operacao realizada.\n");
-        } else {
-            for (int i = 0; i < extrato.size(); i++) {
-                sb.append(String.format("%2d. %s%n", i + 1, extrato.get(i)));
-            }
-        }
-        sb.append("\n-----------------------------------\n");
-        sb.append("Saldo final: ").append(formatarReal(calcularTotal()));
-        sb.append("\n===================================");
-        return sb.toString();
-    }
-
-
     public void show() {
 
-        JFrame frame = new JFrame("Caixa eletronico");
+        JFrame frame = new JFrame("Caixa Eletronico");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(300, 420);
+        frame.setSize(320, 450);
         frame.setResizable(false);
         frame.setLocationRelativeTo(null);
         frame.setLayout(new GridLayout(0, 1, 4, 4));
@@ -173,21 +51,24 @@ public class GUI {
         // -------------------------------------------------------
         // MODULO DO CLIENTE
         // -------------------------------------------------------
-        frame.add(new JLabel("Modulo do Cliente:"));
+        JLabel lblCliente = new JLabel("  Modulo do Cliente:");
+        lblCliente.setFont(lblCliente.getFont().deriveFont(Font.BOLD));
+        frame.add(lblCliente);
 
         JButton btnSaque = new JButton("Efetuar Saque");
         btnSaque.addActionListener(e -> {
-            if (!caixaAtivo()) {
-                JOptionPane.showMessageDialog(frame, "Caixa Vazio: Chame o Operador");
-                return;
-            }
-            String entrada = JOptionPane.showInputDialog(frame, "Digite o valor do saque (R$):");
+            String entrada = JOptionPane.showInputDialog(frame,
+                    "Digite o valor do saque (R$):");
             if (entrada == null || entrada.trim().isEmpty()) return;
             try {
                 int valor = Integer.parseInt(entrada.trim());
-                JOptionPane.showMessageDialog(frame, sacar(valor));
+                String resultado = caixa.sacar(valor);
+                JOptionPane.showMessageDialog(frame, resultado,
+                        "Resultado do Saque", JOptionPane.INFORMATION_MESSAGE);
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(frame, "Valor invalido. Digite apenas numeros inteiros.");
+                JOptionPane.showMessageDialog(frame,
+                        "Valor invalido. Digite apenas numeros inteiros.",
+                        "Erro", JOptionPane.ERROR_MESSAGE);
             }
         });
         frame.add(btnSaque);
@@ -195,55 +76,77 @@ public class GUI {
         // -------------------------------------------------------
         // MODULO DO ADMINISTRADOR
         // -------------------------------------------------------
-        frame.add(new JLabel("Modulo do Administrador:"));
+        JLabel lblAdmin = new JLabel("  Modulo do Administrador:");
+        lblAdmin.setFont(lblAdmin.getFont().deriveFont(Font.BOLD));
+        frame.add(lblAdmin);
 
+        // --- Relatorio de Cedulas ---
         JButton btnRelatorio = new JButton("Relatorio de Cedulas");
-        btnRelatorio.addActionListener(e ->
-                JOptionPane.showMessageDialog(frame, relatorioCedulas())
-        );
+        btnRelatorio.addActionListener(e -> {
+            String relatorio = caixa.pegaRelatorioCedulas();
+            JOptionPane.showMessageDialog(frame, relatorio,
+                    "Relatorio de Cedulas", JOptionPane.INFORMATION_MESSAGE);
+        });
         frame.add(btnRelatorio);
 
+        // --- Valor Total Disponivel ---
         JButton btnValorTotal = new JButton("Valor total disponivel");
-        btnValorTotal.addActionListener(e ->
-                JOptionPane.showMessageDialog(frame, valorTotalDisponivel())
-        );
+        btnValorTotal.addActionListener(e -> {
+            String total = caixa.pegaValorTotalDisponivel();
+            JOptionPane.showMessageDialog(frame, total,
+                    "Valor Total", JOptionPane.INFORMATION_MESSAGE);
+        });
         frame.add(btnValorTotal);
 
+        // --- Reposicao de Cedulas ---
         JButton btnReposicao = new JButton("Reposicao de Cedulas");
         btnReposicao.addActionListener(e -> {
             String[] opcoes = {"R$ 100", "R$ 50", "R$ 20", "R$ 10", "R$ 5", "R$ 2"};
             int[]    valores = {100, 50, 20, 10, 5, 2};
 
             String escolha = (String) JOptionPane.showInputDialog(
-                    frame, "Selecione a cedula a repor:",
-                    "Reposicao de Cedulas", JOptionPane.PLAIN_MESSAGE,
+                    frame,
+                    "Selecione a cedula a repor:",
+                    "Reposicao de Cedulas",
+                    JOptionPane.PLAIN_MESSAGE,
                     null, opcoes, opcoes[0]);
 
             if (escolha == null) return;
 
             int cedula = valores[Arrays.asList(opcoes).indexOf(escolha)];
 
-            String entradaQtd = JOptionPane.showInputDialog(frame, "Quantidade a repor:");
+            String entradaQtd = JOptionPane.showInputDialog(frame,
+                    "Quantidade a repor:");
             if (entradaQtd == null || entradaQtd.trim().isEmpty()) return;
 
             try {
                 int quantidade = Integer.parseInt(entradaQtd.trim());
-                JOptionPane.showMessageDialog(frame, reposicaoCedulas(cedula, quantidade));
+                String resultado = caixa.reposicaoCedulas(cedula, quantidade);
+                JOptionPane.showMessageDialog(frame, resultado,
+                        "Reposicao", JOptionPane.INFORMATION_MESSAGE);
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(frame, "Quantidade invalida. Digite apenas numeros.");
+                JOptionPane.showMessageDialog(frame,
+                        "Quantidade invalida. Digite apenas numeros.",
+                        "Erro", JOptionPane.ERROR_MESSAGE);
             }
         });
         frame.add(btnReposicao);
 
+        // --- Cota Minima ---
         JButton btnCota = new JButton("Cota Minima");
         btnCota.addActionListener(e -> {
-            String entrada = JOptionPane.showInputDialog(frame, "Digite a cota minima do caixa (R$):");
+            String entrada = JOptionPane.showInputDialog(frame,
+                    "Digite a cota minima do caixa (R$):");
             if (entrada == null || entrada.trim().isEmpty()) return;
             try {
                 int minimo = Integer.parseInt(entrada.trim());
-                JOptionPane.showMessageDialog(frame, definirCotaMinima(minimo));
+                String resultado = caixa.armazenaCotaMinima(minimo);
+                JOptionPane.showMessageDialog(frame, resultado,
+                        "Cota Minima", JOptionPane.INFORMATION_MESSAGE);
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(frame, "Valor invalido. Digite apenas numeros.");
+                JOptionPane.showMessageDialog(frame,
+                        "Valor invalido. Digite apenas numeros.",
+                        "Erro", JOptionPane.ERROR_MESSAGE);
             }
         });
         frame.add(btnCota);
@@ -251,12 +154,23 @@ public class GUI {
         // -------------------------------------------------------
         // MODULO DE AMBOS
         // -------------------------------------------------------
-        frame.add(new JLabel("Modulo de Ambos:"));
+        JLabel lblAmbos = new JLabel("  Modulo de Ambos:");
+        lblAmbos.setFont(lblAmbos.getFont().deriveFont(Font.BOLD));
+        frame.add(lblAmbos);
 
+        // --- Sair com extrato ---
         JButton btnSair = new JButton("Sair");
         btnSair.addActionListener(e -> {
-            JOptionPane.showMessageDialog(frame, gerarExtrato(),
-                    "Extrato Final", JOptionPane.INFORMATION_MESSAGE);
+            // Chama gerarExtrato() via cast para CaixaEletronico,
+            // pois o metodo nao esta na interface ICaixaEletronico
+            String extrato = "";
+            if (caixa instanceof CaixaEletronico) {
+                extrato = ((CaixaEletronico) caixa).gerarExtrato();
+            } else {
+                extrato = "Extrato nao disponivel para esta implementacao.";
+            }
+            JOptionPane.showMessageDialog(frame, extrato,
+                    "Extrato Final da Sessao", JOptionPane.INFORMATION_MESSAGE);
             System.exit(0);
         });
         frame.add(btnSair);

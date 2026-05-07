@@ -3,10 +3,8 @@ package caixa_eletronico_aura67;
 
 public class CaixaEletronico implements ICaixaEletronico {
 
- 
-     //Matriz 6x2 que armazena os dados das cédulas.
-     //Coluna 0: Valor da nota (primeira coluna) | Coluna 1: Quantidade em estoque (segunda coluna).
- 
+    // Matriz 6x2 que guarda as cedulas do caixa
+    // Coluna 0 = valor da nota | Coluna 1 = quantidade disponivel no estoque
     private int[][] cedulas = {
         {100, 100},
         {50,  200},
@@ -16,23 +14,21 @@ public class CaixaEletronico implements ICaixaEletronico {
         {2,   500}
     };
 
-    // Variável para armazenamento do limite de segurança para operação do caixa
+    // Valor minimo que o caixa precisa ter para continuar atendendo
     private int cotaMinima = 0;
 
-    // Vetor do tipo [Strings] para armazenar a descrição de cada operação realizada
+    // Vetor que guarda o registro de cada saque feito durante a sessao
     private String[] historico = new String[100];
-    
-    // Índice que controla a posição atual de inserção no vetor de histórico
+
+    // Controla em qual posicao do vetor o proximo registro vai ser salvo
     private int contadorHistorico = 0;
 
-    
-      //Realiza a soma de todos os valores contidos na matriz de cédulas.
-      //@return O valor total em Reais disponível no caixa.
-     
+
+    // Percorre a matriz somando (valor da nota * quantidade) de cada tipo
+    // retorna o total em reais que existe no caixa no momento
     private int calcularTotal() {
         int total = 0;
         for (int i = 0; i < cedulas.length; i++) {
-            // Multiplica o valor da nota pela sua quantidade e soma ao totalizador
             total = total + (cedulas[i][0] * cedulas[i][1]);
         }
         return total;
@@ -47,7 +43,7 @@ public class CaixaEletronico implements ICaixaEletronico {
     public String pegaRelatorioCedulas() {
         String relatorio = "-- Relatorio de Cedulas --\n";
         for (int i = 0; i < cedulas.length; i++) {
-            // Percorre a matriz montando uma listagem do estoque de cada nota
+            // monta linha por linha mostrando o valor e o estoque de cada nota
             relatorio = relatorio + "R$ " + cedulas[i][0] + " -> " + cedulas[i][1] + " cedulas\n";
         }
         return relatorio;
@@ -56,64 +52,93 @@ public class CaixaEletronico implements ICaixaEletronico {
     @Override
     public String sacar(Integer valor) {
 
-        // Impede o processamento de valores nulos, zero ou negativos
+        // nao faz sentido sacar zero ou negativo
         if (valor <= 0) {
             return "Valor invalido! Digite um valor maior que zero.";
         }
 
-        // Valida se o saldo atual do caixa permite novas operações conforme a cota
-        if (calcularTotal() < cotaMinima) {
+        // se o saldo esta abaixo da cota minima, o caixa para de atender
+        if (calcularTotal() <= cotaMinima) {
             return "Caixa Vazio: Chame o Operador";
         }
 
-        // Vetor para auxiliar no registro da quantidade de notas de cada tipo no saque atual
-        int[] notasUsadas = new int[6];
-        int valorRestante = valor;
-        int totalNotasNoSaque = 0;
+        //   Como a tabela funciona:
+        //   dp[v] guarda quantas notas de cada tipo foram usadas para chegar exatamente no valor v
+        //   Se dp[v] for null, significa que e impossivel montar esse valor com as notas do caixa
+        //   Comecamos do zero e construimos ate chegar no valor pedido pelo cliente
 
-        // Implementação do Algoritmo Guloso (busca sempre a maior cédula disponível)
-        for (int i = 0; i < cedulas.length; i++) {
-            int valorDaNota = cedulas[i][0];
-            int qtdNoCaixa = cedulas[i][1];
+        // dp[v] = vetor de 6 posicoes com a quantidade de cada nota usada para somar exatamente v
+        // null = ainda nao foi possivel chegar neste valor com as notas disponiveis
+        int[][] dp = new int[valor + 1][];
+        dp[0] = new int[cedulas.length]; // para somar zero, nao precisa de nenhuma nota
 
-            // Calcula quantas notas desse valor cabem na solicitação
-            int qtdNecessaria = valorRestante / valorDaNota;
-            
-            // Verifica se o caixa possui a quantidade necessária de notas
-            int qtdParaUsar;
-            if (qtdNecessaria < qtdNoCaixa) {
-                qtdParaUsar = qtdNecessaria;
-            } else {
-                qtdParaUsar = qtdNoCaixa;
+        // constroi a tabela de baixo para cima, do valor 1 ate o valor pedido
+        for (int v = 1; v <= valor; v++) {
+            int melhorTotal = Integer.MAX_VALUE;
+            int[] melhorCombinacao = null;
+
+            // testa adicionar uma nota de cada tipo para tentar chegar no valor v
+            for (int i = 0; i < cedulas.length; i++) {
+                int valorNota = cedulas[i][0];
+                int estoqueNota = cedulas[i][1];
+
+                // so vale testar se a nota cabe no valor e se ja existe solucao para o restante
+                if (valorNota <= v && dp[v - valorNota] != null) {
+
+                    // checa se ainda tem notas desse tipo disponivel no estoque
+                    int qtdJaUsada = dp[v - valorNota][i];
+                    if (qtdJaUsada < estoqueNota) {
+
+                        // conta quantas notas no total essa combinacao candidata precisaria
+                        int totalNotas = 0;
+                        for (int k = 0; k < cedulas.length; k++) {
+                            totalNotas += dp[v - valorNota][k];
+                        }
+                        totalNotas += 1; // mais a nota que estamos testando agora
+
+                        // se essa opcao usa menos notas que a melhor encontrada ate agora, salva ela
+                        if (totalNotas < melhorTotal) {
+                            melhorTotal = totalNotas;
+                            melhorCombinacao = new int[cedulas.length];
+                            for (int k = 0; k < cedulas.length; k++) {
+                                melhorCombinacao[k] = dp[v - valorNota][k];
+                            }
+                            melhorCombinacao[i]++; // registra o uso dessa nota na combinacao
+                        }
+                    }
+                }
             }
 
-            // Armazena a decisão no vetor temporário e subtrai do valor restante
-            notasUsadas[i] = qtdParaUsar;
-            totalNotasNoSaque = totalNotasNoSaque + qtdParaUsar;
-            valorRestante = valorRestante - (qtdParaUsar * valorDaNota);
+            // salva a melhor combinacao encontrada para esse valor (null se nao achou nenhuma)
+            dp[v] = melhorCombinacao;
         }
 
-        // [IF] Caso o valor não possa ser decomposto pelas notas disponíveis
-        if (valorRestante > 0) {
+        // se dp[valor] continua null, nao existe combinacao possivel com as notas do caixa
+        if (dp[valor] == null) {
             return "Saque nao realizado por falta de cedulas";
         }
 
-        // Restrição técnica: impede a saída de mais de 30 cédulas por operação como regra do caixa
+        // soma o total de cedulas que vao sair nesse saque
+        int totalNotasNoSaque = 0;
+        for (int i = 0; i < cedulas.length; i++) {
+            totalNotasNoSaque += dp[valor][i];
+        }
+
+        // regra do caixa: nao pode sair mais de 30 cedulas em uma unica operacao
         if (totalNotasNoSaque > 30) {
             return "Saque nao realizado: seria necessario mais de 30 cedulas";
         }
 
-        // Processamento final: atualiza o estoque real na matriz e gera o comprovante
+        // tudo certo, desconta as notas do estoque e monta o comprovante para o cliente
         String resposta = "Saque de R$ " + valor + " realizado!\n";
         for (int i = 0; i < cedulas.length; i++) {
-            if (notasUsadas[i] > 0) {
-                // Decrementa a quantidade de notas na matriz principal
-                cedulas[i][1] = cedulas[i][1] - notasUsadas[i];
-                resposta = resposta + notasUsadas[i] + " nota(s) de R$ " + cedulas[i][0] + "\n";
+            if (dp[valor][i] > 0) {
+                cedulas[i][1] = cedulas[i][1] - dp[valor][i];
+                resposta = resposta + dp[valor][i] + " nota(s) de R$ " + cedulas[i][0] + "\n";
             }
         }
 
-        // Adiciona o registro da operação ao vetor de histórico se houver espaço
+        // salva o registro no historico se ainda tiver espaco no vetor
         if (contadorHistorico < 100) {
             historico[contadorHistorico] = "Saque: R$ " + valor + " | Saldo: R$ " + calcularTotal();
             contadorHistorico++;
@@ -124,7 +149,7 @@ public class CaixaEletronico implements ICaixaEletronico {
 
     @Override
     public String reposicaoCedulas(Integer cedula, Integer quantidade) {
-        // Localiza a cédula correspondente na matriz e incrementa o estoque
+        // procura o tipo de nota na matriz e soma a quantidade informada ao estoque
         for (int i = 0; i < cedulas.length; i++) {
             if (cedulas[i][0] == cedula) {
                 cedulas[i][1] = cedulas[i][1] + quantidade;
@@ -136,15 +161,12 @@ public class CaixaEletronico implements ICaixaEletronico {
 
     @Override
     public String armazenaCotaMinima(Integer minimo) {
-        // Define o patamar mínimo para operação do terminal
+        // guarda o valor minimo, abaixo dele o caixa para de atender
         this.cotaMinima = minimo;
         return "Cota minima definida: R$ " + minimo;
     }
 
-    
-     //Consolida todos os registros armazenados no vetor de histórico.
-     //@return Uma String formatada com todos os saques da sessão.
-     
+    // percorre o vetor de historico e monta o extrato completo da sessao
     public String gerarExtrato() {
         if (contadorHistorico == 0) {
             return "Nenhum saque realizado.";
@@ -152,7 +174,6 @@ public class CaixaEletronico implements ICaixaEletronico {
 
         String textoExtrato = "===== EXTRATO =====\n";
         for (int i = 0; i < contadorHistorico; i++) {
-            // Concatena cada posição preenchida do vetor ao texto final
             textoExtrato = textoExtrato + (i + 1) + ". " + historico[i] + "\n";
         }
         textoExtrato = textoExtrato + "Saldo final: R$ " + calcularTotal();
@@ -160,7 +181,7 @@ public class CaixaEletronico implements ICaixaEletronico {
     }
 
     public static void main(String[] args) {
-        // GUI janela = new GUI(CaixaEletronico.class);
-        // janela.show();
+        GUI janela = new GUI(CaixaEletronico.class);
+        janela.show();
     }
 }

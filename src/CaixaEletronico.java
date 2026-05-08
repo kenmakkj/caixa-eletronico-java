@@ -1,45 +1,33 @@
 package caixa_eletronico_aura67;
 
-/**
- * Implementacao do contrato ICaixaEletronico.
- *
- * Responsabilidades:
- *   - Gerenciar o estoque de cedulas em uma matriz 6x2
- *   - Realizar saques usando o menor numero de cedulas possivel (programacao dinamica)
- *   - Controlar a cota minima de atendimento
- *   - Registrar historico de operacoes para o extrato final
- *
- * Estrutura da matriz de cedulas:
- *   cedulas[i][0] = valor da nota
- *   cedulas[i][1] = quantidade disponivel no estoque
- */
+import java.text.NumberFormat; //bibliotecas para conseguir por o valor em R$ e a localidade, alguns computador estão em ingles, o que inverteria o . e a , 
+import java.util.Locale;
+
+
+// Classe principal do Caixa Eletronico com formatacao de moeda brasileira.
+
 public class CaixaEletronico implements ICaixaEletronico {
 
-    // Matriz 6x2: coluna 0 = valor da nota | coluna 1 = quantidade em estoque
+    // Matriz 6x2: valor da nota | quantidade em estoque - 32.750,00
     private int[][] cedulas = {
-        {100, 100},
-        { 50, 200},
-        { 20, 300},
-        { 10, 350},
-        {  5, 450},
-        {  2, 500}
+            {100, 100},
+            { 50, 200},
+            { 20, 300},
+            { 10, 350},
+            {  5, 450},
+            {  2, 500}
     };
 
-    // Valor minimo que o caixa precisa ter para continuar atendendo clientes
-    private int cotaMinima = 0;
-
-    // Vetor de historico de operacoes da sessao (saques e reposicoes)
+    private int cotaMinima = 0; //cota minima 0 mas é possivel mudar no caixa
     private String[] historico = new String[200];
-
-    // Aponta para a proxima posicao livre no vetor de historico
     private int contadorHistorico = 0;
+    private static final int MAX_CEDULAS_POR_SAQUE = 30; //o caixa só podera sacar 30 cedulas ex: 30 de 100 = 3000
 
-    // Numero maximo de cedulas permitidas em um unico saque
-    private static final int MAX_CEDULAS_POR_SAQUE = 30;
 
-    // ------------------------------------------------------------------
-    // Metodo auxiliar: soma (valor * quantidade) de cada tipo de cedula
-    // ------------------------------------------------------------------
+    private String formatarMoeda(int valor) { //usado para transformar 32750 que estava antes em 32.750,00
+        return NumberFormat.getCurrencyInstance(new Locale("pt", "BR")).format(valor);
+    }
+
     private int calcularTotal() {
         int total = 0;
         for (int i = 0; i < cedulas.length; i++) {
@@ -48,16 +36,10 @@ public class CaixaEletronico implements ICaixaEletronico {
         return total;
     }
 
-    // ------------------------------------------------------------------
-    // Metodo auxiliar: verifica se o caixa esta ativo (acima da cota minima)
-    // ------------------------------------------------------------------
     private boolean caixaAtivo() {
         return calcularTotal() > cotaMinima;
     }
 
-    // ------------------------------------------------------------------
-    // Metodo auxiliar: registra uma operacao no historico da sessao
-    // ------------------------------------------------------------------
     private void registrarHistorico(String operacao) {
         if (contadorHistorico < historico.length) {
             historico[contadorHistorico] = operacao;
@@ -65,226 +47,129 @@ public class CaixaEletronico implements ICaixaEletronico {
         }
     }
 
-    // ------------------------------------------------------------------
-    // ICaixaEletronico: retorna o valor total disponivel no caixa
-    // ------------------------------------------------------------------
     @Override
     public String pegaValorTotalDisponivel() {
         if (!caixaAtivo()) {
             return "Caixa Vazio: Chame o Operador";
         }
-        return "Valor total disponivel no caixa:\n\nR$ " + calcularTotal();
+        return "Valor total disponível no caixa:\n\n" + formatarMoeda(calcularTotal());
     }
 
-    // ------------------------------------------------------------------
-    // ICaixaEletronico: retorna relatorio com estoque de cada cedula
-    // ------------------------------------------------------------------
     @Override
-    public String pegaRelatorioCedulas() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("============================\n");
-        sb.append("    RELATORIO DE CEDULAS\n");
-        sb.append("============================\n\n");
-        sb.append(String.format("%-12s %-12s %s%n", "Cedula", "Quantidade", "Subtotal"));
-        sb.append("----------------------------------------\n");
-        for (int i = 0; i < cedulas.length; i++) {
-            sb.append(String.format("R$ %-9d %-12d R$ %d%n",
+    public String pegaRelatorioCedulas() { //O StringBuilder é uma classe projetada especificamente para montar textos grandes
+        StringBuilder sb = new StringBuilder(); //de forma dinâmica. Ele é mutável.
+        sb.append("========================================\n");
+        sb.append("         RELATÓRIO DE CÉDULAS\n");
+        sb.append("========================================\n\n");
+        sb.append(String.format("%-12s %-12s %s%n", "Cédula", "Quantidade", "Subtotal"));//%s = onde o texto vai entrar
+        sb.append("--------------------------------------------------\n");//%-12s comunicando o sistema para guardar 12 caracteres a esquerda por causa do -
+        for (int i = 0; i < cedulas.length; i++) {//%n para quebrar linha
+            sb.append(String.format("R$ %-9d %-12d %s%n",//%d que ali vai ficar o numero inteiro
                     cedulas[i][0],
                     cedulas[i][1],
-                    cedulas[i][0] * cedulas[i][1]));
+                    formatarMoeda(cedulas[i][0] * cedulas[i][1])));
         }
-        sb.append("----------------------------------------\n");
-        sb.append("TOTAL: R$ ").append(calcularTotal());
+        sb.append("--------------------------------------------------\n");
+        sb.append("TOTAL EM CAIXA: ").append(formatarMoeda(calcularTotal()));//utilizando o formatar moemda para o valor aparecer em R$
         return sb.toString();
     }
 
-    // ------------------------------------------------------------------
-    // ICaixaEletronico: efetua o saque usando programacao dinamica
-    //
-    // Estrategia DP:
-    //   dp[v] guarda o vetor de quantidades de cada cedula necessarias
-    //   para compor exatamente o valor v.
-    //   dp[v] == null significa que o valor v e inalcancavel com as
-    //   cedulas disponiveis no estoque atual.
-    //   A construcao minimiza o numero total de cedulas usadas.
-    // ------------------------------------------------------------------
     @Override
-    public String sacar(Integer valor) {
+    public String sacar(Integer valor) {//Integer usado pq é mais robusto que o int, o int não retornar null, o o java lê como 0
+        if (valor == null || valor <= 0) return "Valor inválido!";//já o Integer lê o null e volta pro usuario, e é mais facil utiliza-lo
+        if (!caixaAtivo()) return "Caixa Vazio: Chame o Operador";//para conversão
 
-        // Validacao basica do valor solicitado
-        if (valor == null || valor <= 0) {
-            return "Valor invalido! Digite um valor maior que zero.";
-        }
-
-        // Verifica se o caixa esta ativo (acima da cota minima)
-        if (!caixaAtivo()) {
-            return "Caixa Vazio: Chame o Operador";
-        }
-
-        // dp[v] = vetor com a quantidade de cada cedula para somar exatamente v
-        // dp[0] = vetor zerado (nenhuma cedula para somar zero)
         int[][] dp = new int[valor + 1][];
-        dp[0] = new int[cedulas.length];
-
-        // Constroi a tabela de baixo para cima: de 1 ate o valor pedido
+        dp[0] = new int[cedulas.length];//algoritmo dinamico, faz com que leia todas as cedulas e combine da melhor forma para entregar
+                                        //o que foi pedido dentro do saque
         for (int v = 1; v <= valor; v++) {
-            int melhorTotal       = Integer.MAX_VALUE;
+            int melhorTotal = Integer.MAX_VALUE;
             int[] melhorCombinacao = null;
 
-            // Testa adicionar uma unidade de cada tipo de cedula
             for (int i = 0; i < cedulas.length; i++) {
-                int valorNota   = cedulas[i][0];
+                int valorNota = cedulas[i][0];
                 int estoqueNota = cedulas[i][1];
 
-                // A cedula deve caber no valor e o subproblema (v - valorNota) precisa ter solucao
                 if (valorNota <= v && dp[v - valorNota] != null) {
-
-                    // Verifica se ainda ha estoque disponivel desse tipo
                     int qtdJaUsada = dp[v - valorNota][i];
                     if (qtdJaUsada < estoqueNota) {
-
-                        // Conta o total de cedulas que essa combinacao candidata usaria
                         int totalNotas = 0;
-                        for (int k = 0; k < cedulas.length; k++) {
-                            totalNotas += dp[v - valorNota][k];
-                        }
-                        totalNotas++; // conta a cedula que estamos testando agora
+                        for (int k = 0; k < cedulas.length; k++) totalNotas += dp[v - valorNota][k];
+                        totalNotas++;
 
-                        // Salva apenas se essa opcao usa menos cedulas que a melhor ate agora
                         if (totalNotas < melhorTotal) {
-                            melhorTotal       = totalNotas;
-                            melhorCombinacao  = new int[cedulas.length];
-                            for (int k = 0; k < cedulas.length; k++) {
-                                melhorCombinacao[k] = dp[v - valorNota][k];
-                            }
+                            melhorTotal = totalNotas;
+                            melhorCombinacao = new int[cedulas.length];
+                            System.arraycopy(dp[v - valorNota], 0, melhorCombinacao, 0, cedulas.length);
                             melhorCombinacao[i]++;
                         }
                     }
                 }
             }
-
-            dp[v] = melhorCombinacao; // null se nenhuma combinacao foi encontrada
+            dp[v] = melhorCombinacao;
         }
 
-        // Se dp[valor] ainda e null, o saque e impossivel com as cedulas atuais
-        if (dp[valor] == null) {
-            return "Nao Temos Notas Para Este Saque.";
-        }
+        if (dp[valor] == null) return "Não Temos Notas Para Este Saque.";
 
-        // Conta o total de cedulas que serao entregues
         int totalNotasNoSaque = 0;
-        for (int i = 0; i < cedulas.length; i++) {
-            totalNotasNoSaque += dp[valor][i];
-        }
+        for (int i = 0; i < cedulas.length; i++) totalNotasNoSaque += dp[valor][i];
 
-        // Regra: nao pode sair mais de 30 cedulas em uma unica operacao
-        if (totalNotasNoSaque > MAX_CEDULAS_POR_SAQUE) {
-            return "Saque nao realizado: seria necessario mais de 30 cedulas.";
-        }
+        if (totalNotasNoSaque > MAX_CEDULAS_POR_SAQUE) return "Saque negado: Limite de 30 cédulas excedido.";
 
-        // Tudo certo: desconta as cedulas do estoque e monta o comprovante
         StringBuilder sb = new StringBuilder();
         sb.append("=== SAQUE REALIZADO ===\n\n");
-        sb.append("Valor sacado: R$ ").append(valor).append("\n\n");
-        sb.append("Cedulas entregues:\n");
+        sb.append("Valor sacado: ").append(formatarMoeda(valor)).append("\n\n");
+        sb.append("Cédulas entregues:\n");
 
         for (int i = 0; i < cedulas.length; i++) {
             if (dp[valor][i] > 0) {
-                cedulas[i][1] -= dp[valor][i]; // desconta do estoque
-                sb.append(String.format("  R$ %3d  x %2d  =  R$ %d%n",
-                        cedulas[i][0],
-                        dp[valor][i],
-                        cedulas[i][0] * dp[valor][i]));
+                cedulas[i][1] -= dp[valor][i];
+                sb.append(String.format("  R$ %3d  x %2d  =  %s%n",
+                        cedulas[i][0], dp[valor][i], formatarMoeda(cedulas[i][0] * dp[valor][i])));
             }
         }
 
-        sb.append("\nTotal de cedulas: ").append(totalNotasNoSaque);
-        sb.append("\nSaldo restante:   R$ ").append(calcularTotal());
+        sb.append("\nTotal de cédulas: ").append(totalNotasNoSaque);
+        sb.append("\nSaldo restante: ").append(formatarMoeda(calcularTotal()));
 
-        // Registra a operacao no historico
-        registrarHistorico("SAQUE: R$ " + valor + " | Saldo: R$ " + calcularTotal());
-
-        // Avisa se o caixa passou a ficar abaixo da cota minima apos o saque
-        if (!caixaAtivo()) {
-            sb.append("\n\n*** Caixa Vazio: Chame o Operador ***");
-        }
+        registrarHistorico("SAQUE: " + formatarMoeda(valor) + " | Saldo: " + formatarMoeda(calcularTotal()));
+        if (!caixaAtivo()) sb.append("\n\n*** Caixa Vazio: Chame o Operador ***");
 
         return sb.toString();
     }
 
-    // ------------------------------------------------------------------
-    // ICaixaEletronico: repoe cedulas de um determinado valor
-    // ------------------------------------------------------------------
     @Override
     public String reposicaoCedulas(Integer cedula, Integer quantidade) {
-        if (quantidade == null || quantidade <= 0) {
-            return "Quantidade invalida. Digite um valor maior que zero.";
-        }
-
+        if (quantidade == null || quantidade <= 0) return "Quantidade inválida.";
         for (int i = 0; i < cedulas.length; i++) {
             if (cedulas[i][0] == cedula) {
-                int antes    = cedulas[i][1];
                 cedulas[i][1] += quantidade;
-
-                registrarHistorico("REPOSICAO: " + quantidade
-                        + "x R$ " + cedula
-                        + " | Saldo: R$ " + calcularTotal());
-
-                return "=== REPOSICAO REALIZADA ===\n\n"
-                        + "Cedula:             R$ " + cedula + "\n"
-                        + "Quantidade antes:   " + antes + "\n"
-                        + "Quantidade reposta: +" + quantidade + "\n"
-                        + "Quantidade atual:   " + cedulas[i][1] + "\n\n"
-                        + "Saldo total: R$ " + calcularTotal();
+                registrarHistorico("REPOSIÇÃO: " + quantidade + "x R$" + cedula + " | Saldo: " + formatarMoeda(calcularTotal()));
+                return "=== REPOSIÇÃO REALIZADA ===\n\n" + "Cédula: R$ " + cedula + "\nQuantidade atual: " + cedulas[i][1] + "\n\nSaldo total: " + formatarMoeda(calcularTotal());
             }
         }
-        return "Cedula de R$ " + cedula + " nao existe.\nUse: 2, 5, 10, 20, 50 ou 100.";
+        return "Cédula inválida.";
     }
 
-    // ------------------------------------------------------------------
-    // ICaixaEletronico: define a cota minima de atendimento
-    // ------------------------------------------------------------------
     @Override
     public String armazenaCotaMinima(Integer minimo) {
-        if (minimo == null || minimo < 0) {
-            return "Valor invalido. Digite um valor positivo.";
-        }
+        if (minimo == null || minimo < 0) return "Valor inválido.";
         this.cotaMinima = minimo;
-        String msg = "Cota minima definida: R$ " + minimo
-                   + "\nSaldo atual: R$ " + calcularTotal();
-        if (!caixaAtivo()) {
-            msg += "\n\n*** Caixa Vazio: Chame o Operador ***";
-        }
-        return msg;
+        return "Cota mínima definida: " + formatarMoeda(minimo) + "\nSaldo atual: " + formatarMoeda(calcularTotal());
     }
 
-    // ------------------------------------------------------------------
-    // Metodo extra: gera extrato completo da sessao (saques + reposicoes)
-    // Chamado pela GUI no evento do botao Sair
-    // ------------------------------------------------------------------
     public String gerarExtrato() {
         StringBuilder sb = new StringBuilder();
-        sb.append("===================================\n");
-        sb.append("       EXTRATO DA SESSAO\n");
-        sb.append("===================================\n\n");
-
-        if (contadorHistorico == 0) {
-            sb.append("Nenhuma operacao realizada.\n");
-        } else {
-            for (int i = 0; i < contadorHistorico; i++) {
-                sb.append(String.format("%2d. %s%n", i + 1, historico[i]));
-            }
-        }
-
-        sb.append("\n-----------------------------------\n");
-        sb.append("Saldo final: R$ ").append(calcularTotal());
-        sb.append("\n===================================");
+        sb.append("========================================\n");
+        sb.append("           EXTRATO DA SESSÃO\n");
+        sb.append("========================================\n\n");
+        if (contadorHistorico == 0) sb.append("Nenhuma operação realizada.\n");
+        else for (int i = 0; i < contadorHistorico; i++) sb.append(String.format("%2d. %s%n", i + 1, historico[i]));
+        sb.append("\n----------------------------------------\n");
+        sb.append("Saldo final: ").append(formatarMoeda(calcularTotal()));
         return sb.toString();
     }
 
-    // ------------------------------------------------------------------
-    // Ponto de entrada: cria a GUI passando esta classe como backend
-    // ------------------------------------------------------------------
     public static void main(String[] args) {
         GUI janela = new GUI(CaixaEletronico.class);
         janela.show();

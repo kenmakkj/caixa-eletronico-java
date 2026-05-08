@@ -5,24 +5,12 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Arrays;
 
-/**
- * Interface grafica do Caixa Eletronico.
- * Toda a logica de negocio e delegada ao objeto CaixaEletronico,
- * que implementa ICaixaEletronico. A GUI nao possui logica propria
- * de saque, reposicao ou calculo — apenas exibe resultados e
- * repassa as acoes do usuario para o backend.
- */
+//Nesta classe não possuimos calculos nem nada do tipo, aqui está somente monstrando o que queremos que o usuario veja
+
 public class GUI {
 
-    // ------------------------------------------------------------------
-    // Backend: instancia do CaixaEletronico que faz todo o trabalho
-    // ------------------------------------------------------------------
     private final ICaixaEletronico caixa;
 
-    // ------------------------------------------------------------------
-    // Construtor — recebe a Class do CaixaEletronico, instancia via
-    // reflexao para manter a assinatura exigida pelo enunciado
-    // ------------------------------------------------------------------
     public GUI(Class<?> classe) {
         ICaixaEletronico instancia = null;
         try {
@@ -35,32 +23,27 @@ public class GUI {
         }
         this.caixa = instancia;
     }
-
-    // ------------------------------------------------------------------
-    // Monta e exibe a janela principal
-    // ------------------------------------------------------------------
+    //janela principal
     public void show() {
 
         JFrame frame = new JFrame("Caixa Eletronico");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(320, 450);
-        frame.setResizable(false);
-        frame.setLocationRelativeTo(null);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);//ao fechar a aba fecha o programa
+        frame.setSize(320, 450);//definir as dimensões da janela
+        frame.setResizable(false);//garante que a janela fique nas dimensões colocadas e o usuario não consiga maximizar ou arrastas as bordas
+        frame.setLocationRelativeTo(null);//Centraliza a janela no meio do monitor do usuário.
         frame.setLayout(new GridLayout(0, 1, 4, 4));
 
-        // -------------------------------------------------------
-        // MODULO DO CLIENTE
-        // -------------------------------------------------------
+      //Modulo do Cliente
         JLabel lblCliente = new JLabel("  Modulo do Cliente:");
         lblCliente.setFont(lblCliente.getFont().deriveFont(Font.BOLD));
         frame.add(lblCliente);
 
-        JButton btnSaque = new JButton("Efetuar Saque");
+        JButton btnSaque = new JButton("Efetuar Saque");//botão sacar
         btnSaque.addActionListener(e -> {
             String entrada = JOptionPane.showInputDialog(frame,
                     "Digite o valor do saque (R$):");
             if (entrada == null || entrada.trim().isEmpty()) return;
-            try {
+            try { // Tenta converter a entrada em número e realizar o saque. Se o usuário digitar letras, o catch captura e exibe o erro.
                 int valor = Integer.parseInt(entrada.trim());
                 String resultado = caixa.sacar(valor);
                 JOptionPane.showMessageDialog(frame, resultado,
@@ -73,14 +56,12 @@ public class GUI {
         });
         frame.add(btnSaque);
 
-        // -------------------------------------------------------
-        // MODULO DO ADMINISTRADOR
-        // -------------------------------------------------------
+        //Modulo Administrador
         JLabel lblAdmin = new JLabel("  Modulo do Administrador:");
         lblAdmin.setFont(lblAdmin.getFont().deriveFont(Font.BOLD));
         frame.add(lblAdmin);
 
-        // --- Relatorio de Cedulas ---
+        //  Relatorio de Cedulas
         JButton btnRelatorio = new JButton("Relatorio de Cedulas");
         btnRelatorio.addActionListener(e -> {
             String relatorio = caixa.pegaRelatorioCedulas();
@@ -89,7 +70,7 @@ public class GUI {
         });
         frame.add(btnRelatorio);
 
-        // --- Valor Total Disponivel ---
+        // Valor Total Disponivel
         JButton btnValorTotal = new JButton("Valor total disponivel");
         btnValorTotal.addActionListener(e -> {
             String total = caixa.pegaValorTotalDisponivel();
@@ -98,7 +79,7 @@ public class GUI {
         });
         frame.add(btnValorTotal);
 
-        // --- Reposicao de Cedulas ---
+        //  Reposicao de Cedulas
         JButton btnReposicao = new JButton("Reposicao de Cedulas");
         btnReposicao.addActionListener(e -> {
             String[] opcoes = {"R$ 100", "R$ 50", "R$ 20", "R$ 10", "R$ 5", "R$ 2"};
@@ -132,7 +113,7 @@ public class GUI {
         });
         frame.add(btnReposicao);
 
-        // --- Cota Minima ---
+        //  Cota Minima
         JButton btnCota = new JButton("Cota Minima");
         btnCota.addActionListener(e -> {
             String entrada = JOptionPane.showInputDialog(frame,
@@ -151,14 +132,13 @@ public class GUI {
         });
         frame.add(btnCota);
 
-        // -------------------------------------------------------
-        // MODULO DE AMBOS
-        // -------------------------------------------------------
+
+        // Modulo Ambos
         JLabel lblAmbos = new JLabel("  Modulo de Ambos:");
         lblAmbos.setFont(lblAmbos.getFont().deriveFont(Font.BOLD));
         frame.add(lblAmbos);
 
-        // --- Sair com extrato ---
+        //  Sair com extrato
         JButton btnSair = new JButton("Sair");
         btnSair.addActionListener(e -> {
             // Chama gerarExtrato() via cast para CaixaEletronico,

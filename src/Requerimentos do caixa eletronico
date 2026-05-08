@@ -1,39 +1,84 @@
-1. Regras de Negócio e Lógica (Funcionalidade)
-    Matriz Obrigatória: O sistema deve trabalhar obrigatoriamente com uma matriz $6\times2$ para armazenar o valor e a quantidade de cédulas.
-                               
-    Cédulas Iniciais: A matriz deve ser inicializada com os seguintes valores e quantidades:
-        R$ 100: 100 notas.
-        R$ 50: 200 notas.
-        R$ 20: 300 notas.
-        R$ 10: 350 notas.
-        R$ 5: 450 notas.
-        R$ 2: 500 notas.
-                               
-    Algoritmo Guloso: O programa deve sempre priorizar as notas de maior valor para emitir o menor número de cédulas possível.
-                               
-    Limite de Cédulas: Não é permitido realizar saques que resultem em mais de 30 cédulas emitidas.
-                               
-    Validação de Notas: Se não houver notas suficientes para o valor exato, deve exibir: "Saque não realizado por falta de cédulas".
-                               
-    Cota Mínima: Se o saldo total do caixa ficar abaixo do valor definido como "Cota Mínima", o sistema deve parar de atender e exibir: "Caixa Vazio: Chame o Operador".
-                               
-    Extrato de Saída: Ao clicar no botão "Sair", o sistema deve obrigatoriamente apresentar um extrato contendo todos os saques realizados e a atualização do saldo final.
-                               
-2. Regras Técnicas e de Implementação
-    Contrato (Interface): É obrigatório implementar a interface ICaixaEletronico fornecida, sem alterar os nomes ou assinaturas dos métodos.
-                               
-    Interface Gráfica (GUI): O código deve estar integrado com a interface gráfica fornecida pelo professor no método main.
-                               
-    Persistência de Dados: Sempre que um saque for efetuado, a quantidade de dinheiro na matriz deve ser decrementada.
-                               
-3. Critérios de Avaliação 
-                               
-    GitHub: O código-fonte deve estar publicado em um repositório organizado no GitHub.
-                            
-    Composição da Nota:
-        50%: Pergunta individual (avaliação oral).
-        20%: Funcionalidade (sistema operando conforme requisitos).
-        20%: Documentação (comentários no código, organização e clareza).
-        10%: Perguntas respondidas corretamente pelo grupo.
+# Requisitos — Caixa Eletronico
+## Grupo Aura 67
 
-//Lembrete: O professor escolherá 2 alunos no momento da apresentação; todos devem dominar o projeto por completo.
+---
+
+## 1. Regras de Negocio e Logica (Funcionalidade)
+
+**Matriz Obrigatoria:**
+O sistema trabalha com uma matriz 6x2 para armazenar o valor e a quantidade de cedulas.
+
+**Cedulas Iniciais:**
+| Cedula  | Quantidade |
+|---------|------------|
+| R$ 100  | 100 notas  |
+| R$ 50   | 200 notas  |
+| R$ 20   | 300 notas  |
+| R$ 10   | 350 notas  |
+| R$ 5    | 450 notas  |
+| R$ 2    | 500 notas  |
+
+**Algoritmo de Saque — Programacao Dinamica (DP):**
+O programa utiliza programacao dinamica para calcular a combinacao
+exata de cedulas que resulte no MENOR numero de notas possiveis.
+
+- E construida uma tabela dp[] de tamanho (valor + 1).
+- dp[0] e inicializado com um vetor zerado (zero cedulas para somar zero).
+- Para cada valor v de 1 ate o valor pedido, o algoritmo testa cada tipo
+  de cedula disponivel no estoque.
+- Se usar uma cedula de valor X resolve o subproblema dp[v - X],
+  e ainda ha estoque dessa cedula, o algoritmo salva essa combinacao
+  caso ela use menos cedulas do que a melhor encontrada ate agora.
+- dp[v] = null significa que o valor v e inalcancavel com o estoque atual.
+- Ao final, dp[valor] contem a combinacao otima, ou null se impossivel.
+
+Vantagem sobre o algoritmo guloso:
+  O guloso pode falhar quando a nota de maior valor nao permite completar
+  o valor exato com as cedulas restantes. A DP encontra a solucao correta
+  mesmo nesses casos, testando todas as combinacoes possiveis de forma eficiente.
+
+  Exemplo onde o guloso falha e a DP resolve:
+    Valor pedido: R$ 30
+    Estoque: R$20 (1 unidade), R$10 (0 unidades), R$5 (6 unidades)
+    Guloso:  pega R$20, sobram R$10, sem nota de R$10 -> FALHA
+    DP:      ignora R$20, usa 6x R$5 = R$30           -> SUCESSO
+
+**Limite de Cedulas:**
+Nao e permitido realizar saques que resultem em mais de 30 cedulas emitidas.
+
+**Validacao de Notas:**
+Se nao houver combinacao possivel de notas para o valor exato, exibir:
+  "Nao Temos Notas Para Este Saque."
+
+**Cota Minima:**
+Se o saldo total do caixa ficar abaixo do valor definido como Cota Minima,
+o sistema para de atender e exibe:
+  "Caixa Vazio: Chame o Operador"
+
+**Extrato de Saida:**
+Ao clicar no botao "Sair", o sistema apresenta obrigatoriamente um extrato
+contendo todos os saques e reposicoes realizados, com o saldo final atualizado.
+
+---
+
+## 2. Regras Tecnicas e de Implementacao
+
+**Contrato (Interface):**
+E obrigatorio implementar a interface ICaixaEletronico fornecida,
+sem alterar os nomes ou assinaturas dos metodos:
+  - pegaValorTotalDisponivel()
+  - sacar(Integer valor)
+  - pegaRelatorioCedulas()
+  - reposicaoCedulas(Integer cedula, Integer quantidade)
+  - armazenaCotaMinima(Integer minimo)
+
+**Interface Grafica (GUI):**
+O codigo deve estar integrado com a interface grafica no metodo main:
+  GUI janela = new GUI(CaixaEletronico.class);
+  janela.show();
+
+**Persistencia de Dados:**
+Sempre que um saque for efetuado, a quantidade de cedulas na matriz
+deve ser decrementada imediatamente.
+
+---
